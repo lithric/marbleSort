@@ -1,0 +1,101 @@
+#pragma region VEXcode Generated Robot Configuration
+// Make sure all required headers are included.
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <math.h>
+#include <string.h>
+
+
+#include "vex.h"
+
+using namespace vex;
+
+// Brain should be defined by default
+brain Brain;
+
+
+// START V5 MACROS
+#define waitUntil(condition)                                                   \
+  do {                                                                         \
+    wait(5, msec);                                                             \
+  } while (!(condition))
+
+#define repeat(iterations)                                                     \
+  for (int iterator = 0; iterator < iterations; iterator++)
+// END V5 MACROS
+
+
+// Robot configuration code.
+light LightGood = light(Brain.ThreeWirePort.A);
+
+
+#pragma endregion VEXcode Generated Robot Configuration
+
+/*----------------------------------------------------------------------------*/
+/*                                                                            */
+/*    Module:       main.cpp                                                  */
+/*    Author:       {author}                                                  */
+/*    Created:      {date}                                                    */
+/*    Description:  V5 project                                                */
+/*                                                                            */
+/*----------------------------------------------------------------------------*/
+
+// Include the V5 Library
+#include "vex.h"
+#include <string>
+
+void printB(const char* words,int cur = 0,bool replace = true) {
+  cur > 0 && replace ?
+  Brain.Screen.clearLine(cur):
+  Brain.Screen.clearLine();
+  if(cur > 0) Brain.Screen.setCursor(cur,1);
+  Brain.Screen.print(words);
+}
+
+void printB(double words,int cur = 0,bool replace = true) {
+  cur > 0 && replace ?
+  Brain.Screen.clearLine(cur):
+  Brain.Screen.clearLine();
+  if(cur > 0) Brain.Screen.setCursor(cur,1);
+  Brain.Screen.print(words);
+}
+
+// Allows for easier use of the VEX Library
+using namespace vex;
+using std::string;
+
+int main() {
+  while(true) {
+    int thresh = LightGood.brightness();
+    printB(thresh,1);
+    const char* col = "unknown";
+    if(thresh >= 31 && thresh <= 51) col = "red";
+    if(thresh > 51) col = "glass";
+    if(thresh < 31) col = "metal";
+    printB(col,2);
+    //red
+    //41
+    //10 err
+    //67
+    //stable
+
+    //metal
+    //24
+    //unstable 2+-
+    //60-80
+    //10 err
+
+    //glass
+    //76
+    //unstable 5+-
+    //80
+
+    //white
+    //60
+    //unstable 5+-
+    //10 err
+    //60-70
+    wait(10,msec);
+  }
+}
