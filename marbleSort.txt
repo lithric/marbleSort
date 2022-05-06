@@ -27,7 +27,11 @@ brain Brain;
 
 
 // Robot configuration code.
-light LightGood = light(Brain.ThreeWirePort.A);
+light LightGood = light(Brain.ThreeWirePort.H);
+motor Teer = motor(PORT1, ratio18_1, false);
+
+motor Gear = motor(PORT2, ratio18_1, false);
+
 
 
 #pragma endregion VEXcode Generated Robot Configuration
@@ -44,6 +48,12 @@ light LightGood = light(Brain.ThreeWirePort.A);
 // Include the V5 Library
 #include "vex.h"
 #include <string>
+#include <vector>
+
+// Allows for easier use of the VEX Library
+using namespace vex;
+using std::string;
+using std::vector;
 
 void printB(const char* words,int cur = 0,bool replace = true) {
   cur > 0 && replace ?
@@ -61,19 +71,70 @@ void printB(double words,int cur = 0,bool replace = true) {
   Brain.Screen.print(words);
 }
 
-// Allows for easier use of the VEX Library
-using namespace vex;
-using std::string;
-
 int main() {
+  const char* col = "glass";
+  const char* avgCol = "glass";
+  int thresh;
+  double avgThresh = 100;
+  bool flip = false;
+  bool changeDetected = false;
+  int logTimeout = 300;
+  int logTime = logTimeout;
+  int loopDelay = 10;
+  vector<int> threshLog = {};
+  vector<double> savedThreshLog = {};
   while(true) {
-    int thresh = LightGood.brightness();
+    thresh = LightGood.brightness();
     printB(thresh,1);
-    const char* col = "unknown";
-    if(thresh >= 31 && thresh <= 51) col = "red";
-    if(thresh > 51) col = "glass";
-    if(thresh < 31) col = "metal";
+    if(thresh > 51) {col = "glass";}
+    else if(thresh < 31) {col = "metal";}
+    else {col = "red";};
     printB(col,2);
+    if(col != "glass" && !changeDetected) {
+      changeDetected = true;
+      savedThreshLog.clear();
+    }
+    if(changeDetected && logTime && thresh < 60) {
+      threshLog.push_back(thresh);
+      logTime -= loopDelay;
+    }
+    else if (changeDetected) { 
+      for(int i=0; i<threshLog.size(); i++) {
+        savedThreshLog.push_back(threshLog[i]);
+        printB(savedThreshLog[i],i+3);
+      }
+      changeDetected = false;
+      flip = true;
+      logTime = logTimeout;
+      threshLog.clear();
+    }
+    avgThresh = 0;
+    for (int i=0; i<savedThreshLog.size(); i++) {
+      avgThresh += savedThreshLog[i]/savedThreshLog.size();
+    }
+    if (flip) {
+      printB(avgThresh);
+      if(avgThresh > 60) {avgCol = "glass";}
+      else if(avgThresh < 50) {avgCol = "metal";}
+      else {avgCol = "red";};
+      printB(avgCol,10);
+      if (strcmp(avgCol,"glass")) {
+          Teer.spinToPosition(30,degrees);
+      }
+      else if (strcmp(avgCol,"metal")) {
+        Teer.spinToPosition(20,degrees);
+      }
+      else if (strcmp(avgCol,"red")) {
+        Teer.spinToPosition(30,degrees);
+      }
+      wait(700,msec);
+      Teer.spinToPosition(0,degrees);
+      flip = false;
+    }
+    
+    // detect change from glass
+    // once change is detected:
+    // log the light sensor data for some amount of time
     //red
     //41
     //10 err
@@ -96,6 +157,6 @@ int main() {
     //unstable 5+-
     //10 err
     //60-70
-    wait(10,msec);
+    wait(loopDelay,msec);
   }
 }
